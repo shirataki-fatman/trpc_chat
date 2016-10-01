@@ -1,0 +1,69 @@
+<html>
+    <head>
+        <title>test</title>
+        <script   src="https://code.jquery.com/jquery-3.1.1.min.js"   integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8="   crossorigin="anonymous"></script>
+    </head>
+    <body>
+        <input type="text" id="argA">
+        <input type="text" id="argB">
+        <button id="send">send</button>
+
+        <script>
+            (function() {
+                /*
+                var ws = new WebSocket("ws://localhost:8080/channel/test");
+                ws.onmessage = function(event) {
+                    if (event && event.data) {
+                        console.log(event);
+                    }
+                };
+                */
+
+                var sendButton = document.getElementById("send");
+                sendButton.addEventListener("click", function() {
+                    var argA = document.getElementById("argA").value;
+                    var argB = document.getElementById("argB").value;
+                    $.ajax({
+                        type: 'POST',
+                        url: '/json',
+                        data: $.makeRequestJSON(null, 'Chat.SendMessage', [{
+                            Message: argA, 
+                            Name: argB,
+                            Channel: "test"
+                        }]),
+                        dataType: 'json',
+                        timeout: 300,
+                        // POST用セッティングでは、header を上書きすることで、自動付与される
+                        // 'application/x-www-form-urlencoded' パラメータ（フォームからの送信）を無効化できる。
+                        headers: {
+                            'Content-Type' : $.ajaxSettings.accepts.json
+                        },
+                        success: function( data, status, xhr ){
+                            // json-rpc2 responce received in data:
+                            // when error too.
+                            //   {"jsonrpc":"2.0","error":{"code":-32700,"message":"Parse Error"},"id":null}
+
+                            // append the HTML to context object.
+                            console.log( data, status, xhr );
+                        },
+                        error: function(xhr, type){
+                            // this call back is http connection error.
+                            alert('Ajax error!')
+                        }
+                    })
+                });
+
+                $.makeRequestJSON = function( id, method, params ) {
+                    params = params || [];
+                    var requestJson = JSON.stringify({
+                        'jsonrpc': '2.0',
+                        id : id || new Date().getTime(),
+                        method : method,
+                        params : Array.isArray( params ) ? params : [ params ]
+                    });
+                    return requestJson;
+                }
+            })()
+        </script>
+    </body>
+</html>
