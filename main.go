@@ -11,6 +11,8 @@ import (
 )
 
 func main() {
+	pluginManager.Load()
+
 	m := melody.New()
 
 	s := rpc.NewServer()
@@ -22,7 +24,9 @@ func main() {
 	r.LoadHTMLGlob("templates/*")
 
 	r.GET("/", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "client.html", gin.H{})
+		c.HTML(http.StatusOK, "client.html", gin.H{
+			"plugins": pluginManager.List(),
+		})
 	})
 
 	r.POST("/json", func(c *gin.Context) {

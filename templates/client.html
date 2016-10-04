@@ -4,8 +4,16 @@
         <script   src="https://code.jquery.com/jquery-3.1.1.min.js"   integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8="   crossorigin="anonymous"></script>
     </head>
     <body>
+        <div>
+            <ul id="log"></ul>
+        </div>
         <input type="text" id="argA">
         <input type="text" id="argB">
+        <select id="argC">
+            {{range .plugins}}
+                <option value="{{.}}">{{.}}</option>
+            {{end}}
+        </select>
         <button id="send">send</button>
 
         <script>
@@ -15,6 +23,9 @@
                 ws.onmessage = function(event) {
                     if (event && event.data) {
                         console.log(event);
+                        var element = document.createElement("li");
+                        element.textContent = event.data;
+                        document.getElementById("log").appendChild(element);
                     }
                 };
 
@@ -22,12 +33,14 @@
                 sendButton.addEventListener("click", function() {
                     var argA = document.getElementById("argA").value;
                     var argB = document.getElementById("argB").value;
+                    var argC = document.getElementById("argC").value;
                     $.ajax({
                         type: 'POST',
                         url: '/json',
                         data: $.makeRequestJSON(null, 'Chat.SendMessage', [{
                             Message: argA, 
                             Name: argB,
+                            Plugin: argC,
                             Channel: "test"
                         }]),
                         dataType: 'json',

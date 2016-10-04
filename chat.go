@@ -13,6 +13,7 @@ type ChatArgs struct {
 	Message string
 	Name    string
 	Channel string
+	Plugin  string
 }
 
 type Chat struct {
@@ -30,16 +31,27 @@ func newChat(melody *melody.Melody) *Chat {
 }
 
 func (t *Chat) SendMessage(r *http.Request, args *ChatArgs, result *Result) error {
+	log := t.getLog(args)
+	log.Write(args.Name + "\t" + args.Message)
+
+	t.send(args.Message, args.Channel)
+	if !t.parseDiceCommand(args) {
+		pluginResult := pluginManager.Exec(args)
+		if pluginResult != "" {
+			t.send(pluginResult, args.Channel)
+		}
+	}
+	*result = 1
+	return nil
+}
+
+func (t *Chat) getLog(args *ChatArgs) *Log {
 	log, err := GetLog(args.Channel)
 	if err != nil {
 		panic(err)
 	}
-	log.Write(args.Name + "\t" + args.Message)
 
-	t.send(args.Message, args.Channel)
-	t.parseDiceCommand(args)
-	*result = 1
-	return nil
+	return log
 }
 
 func (t *Chat) send(message, channel string) {
@@ -48,13 +60,13 @@ func (t *Chat) send(message, channel string) {
 	})
 }
 
-func (t *Chat) parseDiceCommand(args *ChatArgs) {
+func (t *Chat) parseDiceCommand(args *ChatArgs) bool {
 	regex := regexp.MustCompile("^(\\d+)d(\\d+)\\s?")
 
 	str := []byte(args.Message)
 	submatch := regex.FindSubmatch(str)
 	if len(submatch) <= 0 {
-		return
+		return false
 	}
 
 	var matchString string
@@ -88,6 +100,10 @@ func (t *Chat) parseDiceCommand(args *ChatArgs) {
 		diceResultSum += num
 	}
 
-	resultString := matchString + " -> [" + diceResultString + "] -> " + strconv.Itoa(diceResultSum)
+	log := t.getLog(args)
+	resultString := "DiceBot\t" + matchString + " -> [" + diceResultString + "] -> " + strconv.Itoa(diceResultSum)
+	log.Write(resultString)
 	t.send(resultString, args.Channel)
+
+	return true
 }
